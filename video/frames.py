@@ -169,9 +169,16 @@ def create_news_frame(item, index, total):
     bg_path = ASSETS_DIR / "news_bg.png"
     if bg_path.exists():
         img = Image.open(str(bg_path)).convert("RGB")
+        draw = ImageDraw.Draw(img)
     else:
+        # 创建渐变背景
         img = Image.new("RGB", (VIDEO_WIDTH, VIDEO_HEIGHT), C["bg"])
-    draw = ImageDraw.Draw(img)
+        draw = ImageDraw.Draw(img)
+        # 添加深色渐变效果
+        for i in range(VIDEO_HEIGHT):
+            alpha = int(255 * (1 - i / VIDEO_HEIGHT * 0.3))
+            draw.rectangle([(0, i), (VIDEO_WIDTH, i + 1)], fill=(0, 0, 0))
+        draw = ImageDraw.Draw(img)
 
     # 顶部红色条
     draw.rectangle([(0, 0), (VIDEO_WIDTH, 5)], fill=C["red"])
@@ -234,11 +241,15 @@ def create_news_frame(item, index, total):
     font_section = get_font(26, bold=True)
     font_body = get_font(22)
     draw.text((left_x, y), "▎事件概况", font=font_section, fill=C["accent_blue"])
+    # 添加蓝色背景框
+    draw.rounded_rectangle([(left_x + 5, y + 30), (left_x + col_width + 15, VIDEO_HEIGHT - 180)], radius=5, fill=(0, 30, 60, 100))
     y_left = y + 38
     y_left = draw_text_left(draw, item["content"], font_body, left_x + 10, y_left, col_width - 20, C["light_gray"], 8)
 
     # 右栏：深度分析
     draw.text((right_x, y), "▎深度分析", font=font_section, fill=C["gold"])
+    # 添加金色背景框
+    draw.rounded_rectangle([(right_x + 5, y + 30), (right_x + col_width + 15, VIDEO_HEIGHT - 180)], radius=5, fill=(60, 40, 0, 100))
     y_right = y + 38
     y_right = draw_text_left(draw, item["analysis"], font_body, right_x + 10, y_right, col_width - 20, C["light_gray"], 8)
 
@@ -259,7 +270,14 @@ def create_news_frame(item, index, total):
         x_pos = 90 + col * (VIDEO_WIDTH // 2)
         y_pos = bottom_y + row * 26
         if y_pos < VIDEO_HEIGHT - 30:
-            draw.text((x_pos, y_pos), f"► {imp}", font=font_imp, fill=C["gold"])
+            # 添加红色圆点
+            draw.ellipse([(x_pos - 10, y_pos + 8), (x_pos - 2, y_pos + 16)], fill=C["red"])
+            draw.text((x_pos, y_pos), imp, font=font_imp, fill=C["gold"])
+
+    # 底部来源信息
+    font_source = get_font(16)
+    sources_text = "来源: " + ", ".join(item.get("sources", []))
+    draw.text((70, VIDEO_HEIGHT - 60), sources_text, font=font_source, fill=C["gray"])
 
     return img
 

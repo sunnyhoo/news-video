@@ -20,7 +20,7 @@ from video.composer import generate_video
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
-def run_pipeline(hours=12, tts_engine="edge", voice=None, speed=1.0, use_fetcher=False):
+def run_pipeline(hours=12, tts_engine="edge", voice=None, speed=1.0, use_fetcher=False, max_news=3):
     """执行完整的视频生成流水线"""
     # 1. 获取新闻
     if use_fetcher:
@@ -32,9 +32,16 @@ def run_pipeline(hours=12, tts_engine="edge", voice=None, speed=1.0, use_fetcher
     else:
         news_items = get_news_data()
 
+    # 限制新闻数量，控制视频长度
+    if len(news_items) > max_news:
+        news_items = news_items[:max_news]
+        logger.info(f"限制新闻数量为 {max_news} 条，控制视频长度")
+
     logger.info(f"已加载 {len(news_items)} 条新闻")
 
-    # 2. 初始化TTS
+    # 2. 初始化TTS - 默认使用Edge TTS的新闻播报音色
+    if not voice and tts_engine == "edge":
+        voice = "zh-CN-YunyangNeural"  # 云扬(男-新闻播报)
     tts = TTSEngine(engine=tts_engine, voice=voice, speed=speed)
 
     # 3. 生成脚本
@@ -76,6 +83,7 @@ def main():
         result = run_pipeline(
             hours=args.hours, tts_engine=args.tts,
             voice=args.voice, speed=args.speed, use_fetcher=args.fetch,
+            max_news=2
         )
         print(f"\n视频: {result['video']}")
         print(f"脚本: {result['script']}")
